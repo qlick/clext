@@ -1,7 +1,7 @@
 {
   "name": "clext",
   "version": "1.0.0",
-  "description": "",
+  "description": "CLI for Next to add features.",
   "license": "Apache-2.0",
   "authors": ["nelmin", "prohen"],
   "main": "src/index.js",

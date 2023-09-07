@@ -22,6 +22,6 @@ class TemplateManager {
   }
 
   getGitHubFolder(dependencies) {
-    return `${getPath()}/${dependencies.join("-")}`;
+    return `${getPath()}/${dependencies.join("/")}`;
   }
 }

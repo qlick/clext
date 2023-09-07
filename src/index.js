@@ -3,14 +3,16 @@
 import chalk from "chalk";
 import {exec} from "child_process";
 import inquirer from "inquirer";
-import {createSpinner} from "nanospinner";
+import TemplateManager from "./templateManager.js";
 
 await main();
 
 async function main() {
   console.log(`
   Welcome to ${chalk.bgMagenta("clext")}!
-  A CLI tool to add features to your next project.
+  A CLI tool to add features to your Next.js project.
+
+  ${chalk.bgRed("WARNING: clext requires git to be installed!")}
 
   To add new values, make a feature request on github!
   https://github.com/qlick/clext/issues/new/
@@ -65,7 +67,7 @@ async function main() {
     choices: ["None", "Prisma ORM", "Drizzle ORM", "Firestore (Installs Firebase)"],
   });
 
-  if (orm.value != "None") {
+  if (orm.value != "None" && orm.value != "Firestore (Installs Firebase)") {
     const database = await inquirer.prompt({
       name: "value",
       type: "list",
@@ -91,7 +93,7 @@ async function main() {
     },
   });
 
-  if (cssFramework.cssFramework === "UnoCSS") {
+  if (cssFramework.value === "UnoCSS") {
     const unoCss = await inquirer.prompt({
       name: "value",
       type: "confirm",
@@ -102,10 +104,10 @@ async function main() {
     });
   }
 
-  const cssLanguage = await inquirer.prompt({
+  const cssPreprocessor = await inquirer.prompt({
     name: "value",
     type: "list",
-    message: "(8/10) What CSS Language would you like to use?",
+    message: "(8/10) What CSS Preprocessor would you like to use?",
     choices: ["None", "SCSS", "SASS", "LESS", "Stylus"],
   });
 
@@ -127,14 +129,16 @@ async function main() {
 
   console.info(`
   You chose:
+  - Source Folder: ${srcFolder.value}
+  - App Router: ${appRouter.value}
   - Package Manager: ${packageManager.value}
-  - Features: ${features.value.join(", ")}
+  - Features: ${features.value.length == 0 ? "None" : features.value.join(", ")}
   - ORM: ${orm.value}
   - Validator: ${validator.value}
   - CSS Framework: ${cssFramework.value}
-  - CSS Language: ${cssLanguage.value}
+  - CSS Preprocessor: ${cssPreprocessor.value}
   - Auth Provider: ${auth.value}
-  - Install Dependencies: ${installDependencies.value.replace("true", "Yes").replace("false", "No")}
+  - Install Dependencies: ${installDependencies.value}
   `);
 
   const confirm = await inquirer.prompt({
@@ -145,7 +149,9 @@ async function main() {
 
   if (!confirm.value) process.exit(0);
 
-  exec(`${packageManager.value} add ${getDependencies()}`);
+  const dependencies = getDependencies();
+  new TemplateManager(srcFolder.value, appRouter.value, dependencies).initiateTemplate();
+  exec(`${packageManager.value} i ${dependencies}`);
 }
 
 function getDependencies(features, orm, validator, css_framework, css_language, auth) {

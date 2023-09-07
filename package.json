@@ -4,6 +4,9 @@
   "description": "CLI for Next to add features.",
   "license": "Apache-2.0",
   "authors": ["nelmin", "prohen"],
+  "bin": {
+    "practice": "src/index.js"
+  },
   "main": "src/index.js",
   "type": "module",
   "repository": "https://github.com/qlick/clext",
@@ -25,7 +28,6 @@
   ],
   "dependencies": {
     "chalk": "^5.3.0",
-    "inquirer": "^9.2.10",
-    "nanospinner": "^1.1.0"
+    "inquirer": "^9.2.10"
   }
 }

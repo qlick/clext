@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 
 import chalk from "chalk";
-import {exec} from "child_process";
 import inquirer from "inquirer";
 import TemplateManager from "./templateManager.js";
 
 await main();
 
+/**
+ * Main function
+ */
 async function main() {
+  /**
+   * Welcome message
+   */
   console.log(`
   Welcome to ${chalk.bgMagenta("clext")}!
   A CLI tool to add features to your Next.js project.
@@ -17,7 +22,27 @@ async function main() {
   To add new values, make a feature request on github!
   https://github.com/qlick/clext/issues/new/
   `);
+
+  /**
+   * Sleep for 2 seconds
+   */
   await sleep(2000);
+
+  /**
+   * Ask questions
+   * 
+   * @param {boolean} srcFolder - Whether to use src folder or not
+   * @param {boolean} appRouter - Whether to use app router or not
+   * @param {string} packageManager - Package manager to use
+   * @param {string[]} features - Features to add
+   * @param {string} orm - ORM to use
+   * @param {string} validator - Validator to use
+   * @param {string} cssFramework - CSS Framework to use
+   * @param {string} cssPreprocessor - CSS Preprocessor to use
+   * @param {string} auth - Auth Provider to use
+   * @param {boolean} installDependencies - Whether to install dependencies or not
+   * @param {boolean} confirm - Whether to confirm or not
+   */
 
   const srcFolder = await inquirer.prompt({
     name: "value",
@@ -41,7 +66,7 @@ async function main() {
     name: "value",
     type: "list",
     message: "(3/10) What package manager are you using?",
-    choices: ["npm", "yarn", "pnpm"],
+    choices: ["npm", "yarn", "pnpm", "bun"],
   });
 
   const features = await inquirer.prompt({
@@ -51,7 +76,7 @@ async function main() {
     choices: [
       {
         name: "ShadCN-UI (Installs Tailwind CSS)",
-        value: "shadcn",
+        value: "shadcn-ui",
       },
       {
         name: "tRPC",
@@ -151,19 +176,37 @@ async function main() {
 
   const dependencies = getDependencies();
   new TemplateManager(srcFolder.value, appRouter.value, dependencies).initiateTemplate();
-  exec(`${packageManager.value} i ${dependencies}`);
+  
+  await sh(`${packageManager.value} i`);
+  await sh(`${packageManager.value} i ${dependencies}`);
 }
 
-function getDependencies(features, orm, validator, css_framework, css_language, auth) {
+/**
+ * Get the dependencies to be installed
+ * 
+ * @param {string[]} features - Features to add
+ * @param {string} orm - ORM to use
+ * @param {string} validator - Validator to use
+ * @param {string} css_framework - CSS Framework to use
+ * @param {string} css_preprocessor - CSS Preprocessor to use
+ * @param {string} auth - Auth Provider to use
+ * 
+ * @returns {string} - Dependencies to be installed
+ */
+function getDependencies(features, orm, validator, css_framework, css_preprocessor, auth) {
+  /**
+   * Dependencies to be installed
+   */
   let dependencies = [];
 
-  if (features.includes("shadcn")) {
-    dependencies.push("shadcn-ui");
-  }
-  if (features.includes("trpc")) {
-    dependencies.push("trpc");
-  }
+  /**
+   * Add dependencies based on features
+   */
+  dependencies.push(features.map((feature) => feature).join(" "));
 
+  /**
+   * Add dependencies based on chosen orm
+   */
   switch (orm) {
     case "None":
       break;
@@ -176,23 +219,14 @@ function getDependencies(features, orm, validator, css_framework, css_language, 
       break;
   }
 
-  switch (validator) {
-    case "None":
-      break;
-    case "Valibot":
-      dependencies.push("valibot");
-      break;
-    case "Zod":
-      dependencies.push("zod");
-      break;
-    case "Superstruct":
-      dependencies.push("superstruct");
-      break;
-    case "Yup":
-      dependencies.push("yup");
-      break;
-  }
+  /**
+   * Add dependencies based on chosen validator
+   */
+  if (validator != "None") dependencies.push(validator.toLowerCase());
 
+  /**
+   * Add dependencies based on chosen css framework
+   */
   switch (css_framework) {
     case "None":
       break;
@@ -206,40 +240,48 @@ function getDependencies(features, orm, validator, css_framework, css_language, 
       break;
   }
 
-  switch (css_language) {
-    case "None":
-      break;
-    case "SCSS":
-      dependencies.push("sass");
-      break;
-    case "SASS":
-      dependencies.push("sass");
-      break;
-    case "LESS":
-      dependencies.push("less");
-      break;
-    case "Stylus":
-      dependencies.push("stylus");
-      break;
-  }
+  /**
+   * Add dependencies based on chosen css preprocessor
+   */
+  if (css_preprocessor != "None") dependencies.push(css_preprocessor.toLowerCase());
 
-  switch (auth) {
-    case "None":
-      break;
-    case "Firebase":
-      dependencies.push("firebase");
-      break;
-    case "Supabase":
-      dependencies.push("supabase");
-      break;
-    case "Auth0":
-      dependencies.push("auth0");
-      break;
-  }
+  /**
+   * Add dependencies based on chosen auth provider
+   */
+  if (auth != "None") dependencies.push(auth.toLowerCase());
 
+  /**
+   * Return dependencies
+   */
   return dependencies.join(" ");
 }
 
+/**
+ * Sleep for a specified amount of time
+ * 
+ * @param {number} ms - Time to sleep in milliseconds
+ * 
+ * @returns {Promise<void>}
+ */
 function sleep(ms = 2000) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Execute a shell command
+ * 
+ * @param {string} cmd - Command to execute
+ * 
+ * @returns {Promise<{stdout: string, stderr: string}>}
+ */
+async function sh(cmd) {
+  return new Promise(function (resolve, reject) {
+    exec(cmd, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve({stdout, stderr});
+      }
+    });
+  });
 }
